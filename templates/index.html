@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI News Aggregator - Investment Focus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: #f8fafc;
+        }
+
+        h1 span {
+            color: #3b82f6;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #334155;
+        }
+
+        button.secondary:hover {
+            background: #475569;
+        }
+
+        .status {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1.5rem;
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .stat-card h3 {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-value.bullish { color: #22c55e; }
+        .stat-value.neutral { color: #f59e0b; }
+        .stat-value.bearish { color: #ef4444; }
+
+        .sentiment-bar {
+            display: flex;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+            background: #e2e8f0;
+        }
+
+        .sentiment-bar .bullish { background: #22c55e; }
+        .sentiment-bar .neutral { background: #f59e0b; }
+        .sentiment-bar .bearish { background: #ef4444; }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        select {
+            background: #ffffff;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        /* Articles List */
+        .articles-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .article-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .article-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.15);
+        }
+
+        .article-card.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .article-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .article-title {
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.4;
+            color: #1e293b;
+        }
+
+        .sentiment-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .sentiment-badge.bullish { background: #166534; color: #86efac; }
+        .sentiment-badge.neutral { background: #854d0e; color: #fde047; }
+        .sentiment-badge.bearish { background: #991b1b; color: #fca5a5; }
+
+        .article-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 0.75rem;
+        }
+
+        .article-preview {
+            font-size: 0.875rem;
+            color: #64748b;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .category-tag {
+            background: #e2e8f0;
+            color: #475569;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        /* Detail Panel */
+        .detail-panel {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .detail-panel h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #1e293b;
+            line-height: 1.4;
+        }
+
+        .detail-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .detail-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-section h3 {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .detail-section p, .detail-section ul {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #475569;
+        }
+
+        .detail-section ul {
+            list-style: none;
+        }
+
+        .detail-section li {
+            margin-bottom: 0.5rem;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .detail-section li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+        }
+
+        .bubble-indicators {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .bubble-tag {
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+
+        .open-link {
+            display: inline-block;
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+
+        .open-link:hover {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #94a3b8;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Settings Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 400px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+        }
+
+        .modal-content label {
+            display: block;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-content input {
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .detail-panel {
+                position: static;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>AI News <span>Aggregator</span></h1>
+            <div class="header-actions">
+                <span class="status" id="status">Ready</span>
+                <button onclick="refreshFeeds()">Refresh Feeds</button>
+                <button onclick="analyzeArticles()">Analyze with AI</button>
+                <button class="secondary" onclick="showSettings()">Settings</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Stats -->
+        <div class="stats-panel">
+            <div class="stat-card">
+                <h3>Total Articles</h3>
+                <div class="stat-value" id="total-articles">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Market Sentiment</h3>
+                <div class="sentiment-bar" id="sentiment-bar"></div>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.75rem; color: #94a3b8;">
+                    <span id="bullish-count">0 Bullish</span>
+                    <span id="neutral-count">0 Neutral</span>
+                    <span id="bearish-count">0 Bearish</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3>Top Category</h3>
+                <div class="stat-value" style="font-size: 1.25rem; color: #3b82f6;" id="top-category">-</div>
+            </div>
+        </div>
+
+        <!-- Articles List -->
+        <div class="articles-panel">
+            <div class="filters">
+                <select id="sentiment-filter" onchange="loadArticles()">
+                    <option value="">All Sentiments</option>
+                    <option value="Bullish">Bullish</option>
+                    <option value="Neutral">Neutral</option>
+                    <option value="Bearish">Bearish</option>
+                </select>
+                <select id="category-filter" onchange="loadArticles()">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+
+            <div id="articles-list">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+
+        <!-- Detail Panel -->
+        <div class="detail-panel" id="detail-panel">
+            <div class="empty-state">
+                <p>Select an article to view details</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <h2>Settings</h2>
+            <label>Anthropic API Key</label>
+            <input type="password" id="api-key-input" placeholder="sk-ant-...">
+            <p style="font-size: 0.75rem; color: #64748b;">Required for AI-powered analysis. Get your key from console.anthropic.com</p>
+            <div class="modal-actions">
+                <button class="secondary" onclick="hideSettings()">Cancel</button>
+                <button onclick="saveSettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedArticleId = null;
+
+        // Load articles
+        async function loadArticles() {
+            const sentiment = document.getElementById('sentiment-filter').value;
+            const category = document.getElementById('category-filter').value;
+
+            let url = '/api/articles?limit=50';
+            if (sentiment) url += `&sentiment=${sentiment}`;
+            if (category) url += `&category=${encodeURIComponent(category)}`;
+
+            const response = await fetch(url);
+            const articles = await response.json();
+
+            renderArticles(articles);
+        }
+
+        function renderArticles(articles) {
+            const container = document.getElementById('articles-list');
+
+            if (articles.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No articles yet. Click "Refresh Feeds" to fetch news.</p></div>';
+                return;
+            }
+
+            container.innerHTML = articles.map(article => `
+                <div class="article-card ${article.id === selectedArticleId ? 'selected' : ''}"
+                     onclick="selectArticle(${article.id})">
+                    <div class="article-header">
+                        <div class="article-title">${escapeHtml(article.title)}</div>
+                        ${article.sentiment ? `<span class="sentiment-badge ${article.sentiment.toLowerCase()}">${article.sentiment}</span>` : ''}
+                    </div>
+                    <div class="article-meta">
+                        <span>${article.source}</span>
+                        <span>${formatDate(article.published_date)}</span>
+                        ${article.category ? `<span class="category-tag">${article.category}</span>` : ''}
+                    </div>
+                    <div class="article-preview">${escapeHtml(article.summary || article.content || '').substring(0, 200)}...</div>
+                </div>
+            `).join('');
+        }
+
+        async function selectArticle(id) {
+            selectedArticleId = id;
+            loadArticles();
+
+            const response = await fetch(`/api/article/${id}`);
+            const article = await response.json();
+
+            renderDetail(article);
+        }
+
+        function renderDetail(article) {
+            const panel = document.getElementById('detail-panel');
+
+            let bubbleIndicators = [];
+            try {
+                bubbleIndicators = JSON.parse(article.bubble_indicators || '[]');
+            } catch (e) {}
+
+            panel.innerHTML = `
+                <h2>${escapeHtml(article.title)}</h2>
+                <div class="detail-meta">
+                    <span>${article.source}</span>
+                    <span>${formatDate(article.published_date)}</span>
+                    ${article.sentiment ? `<span class="sentiment-badge ${article.sentiment.toLowerCase()}">${article.sentiment}</span>` : ''}
+                    ${article.category ? `<span class="category-tag">${article.category}</span>` : ''}
+                </div>
+
+                ${article.summary ? `
+                <div class="detail-section">
+                    <h3>AI Summary</h3>
+                    <p>${article.summary.replace(/•/g, '<br>•')}</p>
+                </div>
+                ` : ''}
+
+                ${bubbleIndicators.length > 0 ? `
+                <div class="detail-section">
+                    <h3>Bubble Indicators</h3>
+                    <div class="bubble-indicators">
+                        ${bubbleIndicators.map(i => `<span class="bubble-tag">${escapeHtml(i)}</span>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <div class="detail-section">
+                    <h3>Content</h3>
+                    <p>${escapeHtml(article.content || 'No content available').substring(0, 1500)}...</p>
+                </div>
+
+                <a href="${article.url}" target="_blank" class="open-link">Open original article →</a>
+            `;
+        }
+
+        // Load stats
+        async function loadStats() {
+            const response = await fetch('/api/stats');
+            const stats = await response.json();
+
+            document.getElementById('total-articles').textContent = stats.total;
+
+            const bullish = stats.sentiment.Bullish || 0;
+            const neutral = stats.sentiment.Neutral || 0;
+            const bearish = stats.sentiment.Bearish || 0;
+            const total = bullish + neutral + bearish || 1;
+
+            document.getElementById('bullish-count').textContent = `${bullish} Bullish`;
+            document.getElementById('neutral-count').textContent = `${neutral} Neutral`;
+            document.getElementById('bearish-count').textContent = `${bearish} Bearish`;
+
+            document.getElementById('sentiment-bar').innerHTML = `
+                <div class="bullish" style="width: ${(bullish/total)*100}%"></div>
+                <div class="neutral" style="width: ${(neutral/total)*100}%"></div>
+                <div class="bearish" style="width: ${(bearish/total)*100}%"></div>
+            `;
+
+            // Top category
+            const categories = Object.entries(stats.categories);
+            if (categories.length > 0) {
+                document.getElementById('top-category').textContent = categories[0][0];
+            }
+
+            // Update category filter
+            const categoryFilter = document.getElementById('category-filter');
+            categoryFilter.innerHTML = '<option value="">All Categories</option>' +
+                categories.map(([cat]) => `<option value="${cat}">${cat}</option>`).join('');
+        }
+
+        // Refresh feeds
+        async function refreshFeeds() {
+            setStatus('Fetching feeds...');
+            const response = await fetch('/api/refresh', { method: 'POST' });
+            const result = await response.json();
+            setStatus(`Added ${result.new_articles} new articles`);
+            loadArticles();
+            loadStats();
+        }
+
+        // Analyze articles
+        async function analyzeArticles() {
+            setStatus('Analyzing with AI...');
+            const response = await fetch('/api/analyze', { method: 'POST' });
+            const result = await response.json();
+
+            if (result.error) {
+                setStatus(result.error);
+            } else {
+                setStatus(`Analyzed ${result.processed} articles`);
+            }
+            loadArticles();
+            loadStats();
+        }
+
+        // Settings
+        function showSettings() {
+            document.getElementById('settings-modal').classList.add('active');
+        }
+
+        function hideSettings() {
+            document.getElementById('settings-modal').classList.remove('active');
+        }
+
+        async function saveSettings() {
+            const apiKey = document.getElementById('api-key-input').value;
+            await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_key: apiKey })
+            });
+            hideSettings();
+            setStatus('Settings saved');
+        }
+
+        // Utilities
+        function setStatus(text) {
+            document.getElementById('status').textContent = text;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            // Adjust for timezone - show in local time
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initial load
+        loadArticles();
+        loadStats();
+    </script>
+</body>
+</html>
